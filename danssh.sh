@@ -4,21 +4,20 @@ def handler(clientsock, addr):
     try:
         data = clientsock.recv(1024)
         if not data: return
-        # Responde qualquer pedido com o Upgrade necessário
+        # Isso aqui resolve o erro 501 do seu log
         clientsock.send(b'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n')
         
         target = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         target.connect(('127.0.0.1', 22))
         
-        def forward(source, destination):
+        def forward(s, d):
             try:
                 while True:
-                    chunk = source.recv(8192)
+                    chunk = s.recv(8192)
                     if not chunk: break
-                    destination.sendall(chunk)
+                    d.sendall(chunk)
             except: pass
-            finally: source.close(); destination.close()
-
+        
         threading.Thread(target=forward, args=(clientsock, target)).start()
         forward(target, clientsock)
     except: pass
