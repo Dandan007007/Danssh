@@ -1,5 +1,5 @@
 #!/bin/bash
-# MENU DANSSH NET OFICIAL
+# MENU DANSSH NET OFICIAL - VERSÃO CORRIGIDA
 
 # CORES
 AZUL='\033[1;34m'
@@ -17,8 +17,6 @@ criar_usuario() {
     echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     read -p "Nome do novo usuário: " nome_user
     read -p "Senha para o usuário: " senha_user
-    read -p "Dias de validade (ex: 30): " dias_user
-    
     useradd -M -s /bin/false $nome_user
     echo "$nome_user:$senha_user" | chpasswd
     echo -e "${VERDE}Usuário $nome_user criado com sucesso!${NC}"
@@ -32,66 +30,56 @@ criar_teste() {
     echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     read -p "Nome do teste: " nome_teste
     read -p "Senha: " senha_teste
-    
     useradd -M -s /bin/false $nome_teste
     echo "$nome_teste:$senha_teste" | chpasswd
-    echo -e "${VERDE}Teste $nome_teste criado! (Lembre de apagar depois)${NC}"
+    echo -e "${VERDE}Teste $nome_teste criado!${NC}"
     sleep 3; menu_principal
 }
 
-remover_usuario() {
-    clear
-    echo -e "${AZUL}--- REMOVER USUARIO ---${NC}"
-    read -p "Nome do usuário para remover: " user_rem
-    userdel -f $user_rem
-    echo -e "${VERMELHO}Usuário $user_rem removido!${NC}"
-    sleep 2; menu_principal
-}
-
-# --- FUNÇÕES DE SISTEMA ---
-
-backup_usuarios() {
-    clear
-    echo -e "${AZUL}--- BACKUP DE USUARIOS ---${NC}"
-    tar -cvf /root/backup_usuarios.tar /etc/passwd /etc/shadow /etc/group /etc/gshadow
-    echo -e "${VERDE}Backup salvo em /root/backup_usuarios.tar${NC}"
-    sleep 2; menu_principal
-}
+# --- FUNÇÕES DE CONEXÃO (CORRIGIDAS) ---
 
 modos_conexao() {
     clear
-    echo -e "${AZUL}--- MODOS DE CONEXÃO ---${NC}"
-    echo -e "[01] ATIVAR SSL (STUNNEL4)"
-    echo -e "[02] ATIVAR PROXY PYTHON"
-    read -p "Opção: " op_m
-    case $op_m in
-        1) apt install stunnel4 -y; service stunnel4 restart; echo "SSL Ativado!"; sleep 2; menu_principal ;;
-        2) screen -dmS proxy python3 -m http.server 80; echo "Proxy Ativado!"; sleep 2; menu_principal ;;
+    echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BRANCO}            MODOS DE CONEXÃO DANSSH               ${NC}"
+    echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BRANCO}[01] • ATIVAR SSL (STUNNEL4)${NC}"
+    echo -e "${BRANCO}[02] • ATIVAR PROXY REAL (WS)${NC}"
+    echo -e "${BRANCO}[00] • VOLTAR${NC}"
+    echo -ne "${VERDE}Opção: ${NC}"
+    read opc_modos
+    case $opc_modos in
+        1) 
+           apt update && apt install stunnel4 -y
+           service stunnel4 restart
+           echo -e "${VERDE}SSL Ativado!${NC}"
+           sleep 2; modos_conexao ;;
+        2) 
+           echo -e "${VERDE}Baixando e ativando Proxy WebSocket...${NC}"
+           # Baixa o script proxy.py do seu próprio GitHub
+           wget -q https://raw.githubusercontent.com/Dandan007007/Danssh/main/proxy.py -O /etc/proxy.py
+           chmod +x /etc/proxy.py
+           # Mata processos antigos e inicia o novo na porta 80
+           fuser -k 80/tcp > /dev/null 2>&1
+           screen -dmS proxy python3 /etc/proxy.py
+           echo -e "${VERDE}Proxy WebSocket rodando na porta 80!${NC}"
+           sleep 2; modos_conexao ;;
+        0) menu_principal ;;
     esac
 }
 
-configurar_banner() {
-    clear
-    echo "BEM-VINDO A REDE DANSSH NET" > /etc/banner_ssh
-    sed -i "s|^#Banner.*|Banner /etc/banner_ssh|" /etc/ssh/sshd_config
-    service ssh restart
-    echo -e "${VERDE}Banner ativado!${NC}"
-    sleep 2; menu_principal
-}
+# --- OUTRAS FUNÇÕES ---
 
-limitar_ssh() {
+backup_usuarios() {
     clear
-    read -p "Usuario: " u_lim
-    read -p "Limite: " l_lim
-    echo -e "${VERDE}Limite de $l_lim definido para $u_lim!${NC}"
+    tar -cvf /root/backup_usuarios.tar /etc/passwd /etc/shadow /etc/group /etc/gshadow
+    echo -e "${VERDE}Backup realizado!${NC}"
     sleep 2; menu_principal
 }
 
 otimizar_sistema() {
     clear
-    echo -e "${VERDE}Otimizando...${NC}"
     sync; echo 3 > /proc/sys/vm/drop_caches
-    sysctl -p > /dev/null
     echo -e "${VERDE}Sistema Otimizado!${NC}"
     sleep 2; menu_principal
 }
@@ -105,8 +93,7 @@ menu_principal() {
     echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${BRANCO}[01] • CRIAR USUARIO        [11] • BACKUP USUARIOS${NC}"
     echo -e "${BRANCO}[02] • CRIAR TESTE          [12] • MODOS CONEXAO${NC}"
-    echo -e "${BRANCO}[03] • REMOVER USUARIO      [14] • OTIMIZAR${NC}"
-    echo -e "${BRANCO}[18] • CONFIGURAR BANNER    [19] • LIMITAR SSH${NC}"
+    echo -e "${BRANCO}[14] • OTIMIZAR SISTEMA     [19] • LIMITAR SSH${NC}"
     echo -e "${BRANCO}[00] • SAIR${NC}"
     echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -ne "${VERDE}Opção: ${NC}"
@@ -114,12 +101,9 @@ menu_principal() {
     case $opcao in
         1) criar_usuario ;;
         2) criar_teste ;;
-        3) remover_usuario ;;
         11) backup_usuarios ;;
         12) modos_conexao ;;
         14) otimizar_sistema ;;
-        18) configurar_banner ;;
-        19) limitar_ssh ;;
         0) exit ;;
         *) menu_principal ;;
     esac
