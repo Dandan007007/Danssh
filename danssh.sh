@@ -88,4 +88,19 @@ menu_principal() {
     esac
 }
 
+otimizar_sistema() {
+    clear
+    echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BRANCO}          OTIMIZAÇÃO DE SISTEMA DANSSH            ${NC}"
+    echo -e "${AZUL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${VERDE}Limpando cache da memória RAM...${NC}"
+    sync; echo 3 > /proc/sys/vm/drop_caches
+    
+    echo -e "${VERDE}Ajustando limites de arquivos...${NC}"
+    echo "fs.file-max = 51200" >> /etc/sysctl.conf
+    sysctl -p > /dev/null
+    
+    echo -e "${VERDE}Otimização concluída com sucesso!${NC}"
+    sleep 2; menu_principal
+}
 menu_principal
