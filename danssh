@@ -1,0 +1,35 @@
+import socket, threading, select
+
+def handler(clientsock, addr):
+    try:
+        # Recebe o pedido inicial do Injector
+        data = clientsock.recv(1024).decode('utf-8', errors='ignore')
+        if not data: return
+        
+        # Envia a resposta de "Upgrade" que o seu log pediu
+        clientsock.send(b'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n')
+        
+        # Conecta ao SSH local
+        target = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        target.connect(('127.0.0.1', 22))
+        
+        sockets = [clientsock, target]
+        while True:
+            readable, writable, err = select.select(sockets, [], sockets, 3)
+            if err: break
+            for sock in readable:
+                data = sock.recv(8192)
+                if not data: break
+                if sock is clientsock: target.send(data)
+                else: clientsock.send(data)
+            if not data: break
+    except: pass
+    finally: clientsock.close()
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.bind(('0.0.0.0', 80))
+server.listen(100)
+while True:
+    c, addr = server.accept()
+    threading.Thread(target=handler, args=(c, addr)).start()
