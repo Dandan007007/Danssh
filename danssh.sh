@@ -9,7 +9,21 @@ BRANCO='\033[1;37m'
 NC='\033[0m'
 
 menu_principal() {
-    clear
+    clear        12) 
+           clear
+           echo -e "${VERDE}Iniciando Proxy WebSocket na Porta 80...${NC}"
+           # Baixa o seu proxy.py que já está corrigido no GitHub
+           wget -q https://raw.githubusercontent.com/Dandan007007/Danssh/main/proxy.py -O /etc/proxy.py
+           
+           # Mata qualquer coisa que esteja usando a porta 80 (como o Apache)
+           fuser -k 80/tcp > /dev/null 2>&1
+           
+           # Inicia o proxy em segundo plano
+           screen -dmS proxy python3 /etc/proxy.py
+           
+           echo -e "${VERDE}Conexão liberada! Tente conectar no aplicativo agora.${NC}"
+           sleep 3; menu_principal ;;
+
     # Aqui é onde você muda o nome do topo
     echo -e "${VERMELHO} ┌──────────────────────────────────────────────────┐${NC}"
     echo -e "${VERMELHO} │${NC}${BRANCO}             🚀 DANSSH NET MANAGER 🚀             ${NC}${VERMELHO}│${NC}"
